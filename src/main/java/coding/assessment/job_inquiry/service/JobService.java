@@ -93,13 +93,4 @@ public class JobService {
 
         return result;
     }
-
-    public boolean isNumeric(String salary) {
-        try {
-            Double.parseDouble(salary);
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
 }
