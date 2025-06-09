@@ -1,7 +1,9 @@
 package coding.assessment.job_inquiry.service;
 
+import coding.assessment.job_inquiry.model.entity.EmployeeRepositoryEntity;
 import coding.assessment.job_inquiry.model.request.JobFilterRequest;
 import coding.assessment.job_inquiry.model.JobModel;
+import coding.assessment.job_inquiry.utility.DataLoader;
 import coding.assessment.job_inquiry.utility.Utils;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,19 +16,21 @@ import java.util.stream.Stream;
 @Service
 public class JobService {
     private final List<JobModel> jobDataLists;
+    private final DataLoader dataLoader;
 
-    public JobService(@Qualifier("jobDataLists") List<JobModel> jobDataLists) {
+
+    public JobService(@Qualifier("jobDataLists") List<JobModel> jobDataLists,
+                      DataLoader dataLoader) {
         this.jobDataLists = jobDataLists;
+        this.dataLoader = dataLoader;
     }
 
-    public List<JobModel> getAllJobDataLists() {
-        return jobDataLists;
-    }
 
     public List<Map<String, Object>> filteredJobs(
             JobFilterRequest request
     ) {
-        Stream<JobModel> stream = jobDataLists.stream();
+        List<EmployeeRepositoryEntity> cachedEmployeeList = dataLoader.getCachedDataList();
+        Stream<EmployeeRepositoryEntity> stream = cachedEmployeeList.stream();
 
         String jobTitle = Optional.ofNullable(request)
                 .map(JobFilterRequest::getJobTitle)
@@ -45,7 +49,7 @@ public class JobService {
                 .orElse(null);
 
         if (!StringUtils.isBlank(jobTitle)) {
-            stream = stream.filter(job -> job.getJobTiltle().equalsIgnoreCase(jobTitle));
+            stream = stream.filter(job -> job.getJobTitle().equalsIgnoreCase(jobTitle));
         }
 
         if (!StringUtils.isBlank(gender)) {
@@ -66,20 +70,21 @@ public class JobService {
             });
         }
 
-        List<JobModel> filteredList = stream.toList();
+        List<EmployeeRepositoryEntity> filteredList = stream.toList();
 
         Set<String> selectedFields = fields != null ?
                 Arrays.stream(fields.split(","))
                     .map(String::trim)
                     .collect(Collectors.toSet())
                 : null;
+
         List<Map<String, Object>> result = new ArrayList<>();
 
-        for (JobModel job : filteredList) {
+        for (EmployeeRepositoryEntity job : filteredList) {
             Map<String, Object> map = new LinkedHashMap<>();
 
             if (selectedFields == null || selectedFields.contains("jobTitle")) {
-                map.put("jobTitle", job.getJobTiltle());
+                map.put("jobTitle", job.getJobTitle());
             }
             if (selectedFields == null || selectedFields.contains("salary")) {
                 map.put("salary", job.getSalary());
