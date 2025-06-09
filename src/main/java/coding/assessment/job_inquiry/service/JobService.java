@@ -18,13 +18,11 @@ public class JobService {
     private final List<JobModel> jobDataLists;
     private final DataLoader dataLoader;
 
-
     public JobService(@Qualifier("jobDataLists") List<JobModel> jobDataLists,
                       DataLoader dataLoader) {
         this.jobDataLists = jobDataLists;
         this.dataLoader = dataLoader;
     }
-
 
     public List<Map<String, Object>> filteredJobs(
             JobFilterRequest request
